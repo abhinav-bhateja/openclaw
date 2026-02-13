@@ -124,13 +124,22 @@ export async function applyAuthChoiceOpenAI(
       );
     };
 
-    const creds = await loginOpenAICodexOAuth({
-      prompter: params.prompter,
-      runtime: params.runtime,
-      isRemote: isRemoteEnvironment(),
-      openUrl,
-      localBrowserMessage: "Complete sign-in in browser…",
-    });
+    let creds;
+    try {
+      creds = await loginOpenAICodexOAuth({
+        prompter: params.prompter,
+        runtime: params.runtime,
+        isRemote: isRemoteEnvironment(),
+        openUrl: async (url) => {
+          await openUrl(url);
+        },
+        localBrowserMessage: "Complete sign-in in browser…",
+      });
+    } catch {
+      // The helper already surfaces the error to the user.
+      // Keep onboarding flow alive and return unchanged config.
+      return { config: nextConfig, agentModelOverride };
+    }
     if (creds) {
       await writeOAuthCredentials("openai-codex", creds, params.agentDir);
       nextConfig = applyAuthProfileConfig(nextConfig, {

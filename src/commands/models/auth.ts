@@ -356,7 +356,9 @@ export async function modelsAuthLoginCommand(opts: LoginOptions, runtime: Runtim
       prompter,
       runtime,
       isRemote: isRemoteEnvironment(),
-      openUrl,
+      openUrl: async (url) => {
+        await openUrl(url);
+      },
     });
     if (!creds) {
       return;
