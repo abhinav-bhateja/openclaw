@@ -68,6 +68,7 @@ import { resolveSessionKeyForRun } from "./server-session-key.js";
 import { logGatewayStartup } from "./server-startup-log.js";
 import { startGatewaySidecars } from "./server-startup.js";
 import { startGatewayTailscaleExposure } from "./server-tailscale.js";
+import { attachGatewayTranscriptChatBridge } from "./server-transcript-events.js";
 import { createWizardSessionTracker } from "./server-wizard-sessions.js";
 import { attachGatewayWsHandlers } from "./server-ws-runtime.js";
 import {
@@ -454,6 +455,11 @@ export async function startGatewayServer(
     }),
   );
 
+  const transcriptUnsub = attachGatewayTranscriptChatBridge({
+    broadcast,
+    log,
+  });
+
   const heartbeatUnsub = onHeartbeatEvent((evt) => {
     broadcast("heartbeat", evt, { dropIfSlow: true });
   });
@@ -624,6 +630,7 @@ export async function startGatewayServer(
     dedupeCleanup,
     agentUnsub,
     heartbeatUnsub,
+    transcriptUnsub,
     chatRunState,
     clients,
     configReloader,
@@ -657,6 +664,7 @@ export async function startGatewayServer(
         skillsRefreshTimer = null;
       }
       skillsChangeUnsub();
+      transcriptUnsub();
       await close(opts);
     },
   };
